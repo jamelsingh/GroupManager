@@ -343,7 +343,10 @@ Please check Evolution Updates channel! @EvolutionXUpdates or Click the button d
 
 def enesrelease(bot: Bot, update: Update, args: List[str]):
     message = update.effective_message
-    usr = get(f'https://api.github.com/repos/EnesSastim/Downloads/releases/latest').json()
+    usr = get(
+        'https://api.github.com/repos/EnesSastim/Downloads/releases/latest'
+    ).json()
+
     reply_text = "*Enes Sastim's lastest upload(s)*\n"
     for i in range(len(usr)):
         try:
@@ -357,7 +360,10 @@ def enesrelease(bot: Bot, update: Update, args: List[str]):
 
 def phh(bot: Bot, update: Update, args: List[str]):
     message = update.effective_message
-    usr = get(f'https://api.github.com/repos/phhusson/treble_experimentations/releases/latest').json()
+    usr = get(
+        'https://api.github.com/repos/phhusson/treble_experimentations/releases/latest'
+    ).json()
+
     reply_text = "*Phh's lastest AOSP Release(s)*\n"
     for i in range(len(usr)):
         try:
@@ -371,7 +377,10 @@ def phh(bot: Bot, update: Update, args: List[str]):
 
 def descendant(bot: Bot, update: Update, args: List[str]):
     message = update.effective_message
-    usr = get(f'https://api.github.com/repos/Descendant/InOps/releases/latest').json()
+    usr = get(
+        'https://api.github.com/repos/Descendant/InOps/releases/latest'
+    ).json()
+
     reply_text = "*Descendant GSI Download(s)*\n"
     for i in range(len(usr)):
         try:
@@ -394,19 +403,25 @@ def miui(bot: Bot, update: Update):
         message.reply_text(reply_text, parse_mode=ParseMode.MARKDOWN, disable_web_page_preview=True)
         return
 
-    result = "*Recovery ROM*\n\n"
-    result += "*Stable*\n"
-    stable_all = yaml.load(get(giturl + "stable_recovery/stable_recovery.yml").content, Loader=yaml.FullLoader)
-    data = [i for i in stable_all if device == i['codename']]
-    if len(data) != 0:
+    result = "*Recovery ROM*\n\n" + "*Stable*\n"
+    stable_all = yaml.load(
+        get(f'{giturl}stable_recovery/stable_recovery.yml').content,
+        Loader=yaml.FullLoader,
+    )
+
+    if data := [i for i in stable_all if device == i['codename']]:
         for i in data:
-            result += "[" + i['filename'] + "](" + i['download'] + ")\n\n"
+            result += f'[{i["filename"]}]({i["download"]}' + ")\n\n"
 
         result += "*Weekly*\n"
-        weekly_all = yaml.load(get(giturl + "weekly_recovery/weekly_recovery.yml").content, Loader=yaml.FullLoader)
+        weekly_all = yaml.load(
+            get(f'{giturl}weekly_recovery/weekly_recovery.yml').content,
+            Loader=yaml.FullLoader,
+        )
+
         data = [i for i in weekly_all if device == i['codename']]
         for i in data:
-            result += "[" + i['filename'] + "](" + i['download'] + ")"
+            result += f'[{i["filename"]}]({i["download"]})'
     else:
         result = "Couldn't find any device matching your query."
 
@@ -430,13 +445,16 @@ def getaex(bot: Bot, update: Update, args: List[str]):
         apidata = json.loads(res.text)
         if apidata.get('error'):
             message.reply_text("Sadly there isn't any build available for " + device)
-            return
         else:
             developer = apidata.get('developer')
             developer_url = apidata.get('developer_url')
             xda = apidata.get('forum_url')
             filename = apidata.get('filename')
-            url = "https://downloads.aospextended.com/download/" + device + "/" + version + "/" + apidata.get('filename')
+            url = (
+                f'https://downloads.aospextended.com/download/{device}/{version}/'
+                + apidata.get('filename')
+            )
+
             builddate = datetime.strptime(apidata.get('build_date'), "%Y%m%d-%H%M").strftime("%d %B %Y")
             buildsize = sizee(int(apidata.get('filesize')))
 
@@ -447,7 +465,7 @@ def getaex(bot: Bot, update: Update, args: List[str]):
 
             keyboard = [[InlineKeyboardButton(text="Click here to download", url=f"{url}")]]
             update.effective_message.reply_text(message, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode=ParseMode.MARKDOWN, disable_web_page_preview=True)
-            return
+        return
     else:
         message.reply_text("No builds found for the provided device-version combo.")
 
@@ -466,31 +484,18 @@ def bootleggers(bot: Bot, update: Update):
     if fetch.status_code == 200:
         nestedjson = fetch.json()
 
-        if codename.lower() == 'x00t':
-            devicetoget = 'X00T'
-        else:
-            devicetoget = codename.lower()
-
+        devicetoget = 'X00T' if codename.lower() == 'x00t' else codename.lower()
         reply_text = ""
-        devices = {}
-
-        for device, values in nestedjson.items():
-            devices.update({device: values})
+        devices = dict(nestedjson.items())
 
         if devicetoget in devices:
+            dontneedlist = ['id', 'filename', 'download', 'xdathread']
+            peaksmod = {'fullname': 'Device name', 'buildate': 'Build date', 'buildsize': 'Build size',
+                        'downloadfolder': 'SourceForge folder', 'mirrorlink': 'Mirror link', 'xdathread': 'XDA thread'}
             for oh, baby in devices[devicetoget].items():
-                dontneedlist = ['id', 'filename', 'download', 'xdathread']
-                peaksmod = {'fullname': 'Device name', 'buildate': 'Build date', 'buildsize': 'Build size',
-                            'downloadfolder': 'SourceForge folder', 'mirrorlink': 'Mirror link', 'xdathread': 'XDA thread'}
                 if baby and oh not in dontneedlist:
-                    if oh in peaksmod:
-                        oh = peaksmod[oh]
-                    else:
-                        oh = oh.title()
-
-                    if oh == 'SourceForge folder':
-                        reply_text += f"\n*{oh}:* [Here]({baby})"
-                    elif oh == 'Mirror link':
+                    oh = peaksmod.get(oh, oh.title())
+                    if oh in ['SourceForge folder', 'Mirror link']:
                         reply_text += f"\n*{oh}:* [Here]({baby})"
                     else:
                         reply_text += f"\n*{oh}:* `{baby}`"

@@ -46,9 +46,7 @@ def get_user_id(username):
                     return userdat.id
 
             except BadRequest as excp:
-                if excp.message == 'Chat not found':
-                    pass
-                else:
+                if excp.message != 'Chat not found':
                     LOGGER.exception("Error extracting user ID")
 
     return None
@@ -108,7 +106,7 @@ def chats(bot: Bot, update: Update):
             else:
                 invitelink = "0"
             chatfile += "{}. {} | {} | {} | {}\n".format(P, chat.chat_name, chat.chat_id, chat_members, invitelink)
-            P = P + 1
+            P += 1
         except:
             pass
 
@@ -120,19 +118,15 @@ def chats(bot: Bot, update: Update):
 
 @run_async
 def banall(bot: Bot, update: Update, args: List[int]):
-    if args:
-        chat_id = str(args[0])
-        all_mems = sql.get_chat_members(chat_id)
-    else:
-        chat_id = str(update.effective_chat.id)
-        all_mems = sql.get_chat_members(chat_id)
+    chat_id = str(args[0]) if args else str(update.effective_chat.id)
+    all_mems = sql.get_chat_members(chat_id)
     for mems in all_mems:
         try:
             bot.kick_chat_member(chat_id, mems.user)
             update.effective_message.reply_text("Tried banning " + str(mems.user))
             sleep(0.1)
         except BadRequest as excp:
-            update.effective_message.reply_text(excp.message + " " + str(mems.user))
+            update.effective_message.reply_text(f'{excp.message} ' + str(mems.user))
             continue
 
 
@@ -218,7 +212,7 @@ def slist(bot: Bot, update: Update):
             user = bot.get_chat(user_id)
             name = "[{}](tg://user?id={})".format(user.first_name + (user.last_name or ""), user.id)
             if user.username:
-                name = escape_markdown("@" + user.username)
+                name = escape_markdown(f'@{user.username}')
             text2 += "\n - `{}`".format(name)
         except BadRequest as excp:
             if excp.message == 'Chat not found':
